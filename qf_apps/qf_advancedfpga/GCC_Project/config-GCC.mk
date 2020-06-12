@@ -1,7 +1,7 @@
 #
 # Symbiflow options for QORK SDK
 #
-export RTL_TOP_MODULE=AL4S3B_FPGA_top
+export RTL_TOP_MODULE=top
 
 #
 # GCC Configuration options for QORC SDK
