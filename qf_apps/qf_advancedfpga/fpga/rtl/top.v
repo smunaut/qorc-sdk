@@ -53,7 +53,7 @@ module top #(
 	wire        ep_rx_re;
 
 
-	wire sys_int = 1'b0;
+	wire sys_int;
 
 	// Clock / Reset
 	wire sys_clk0;
@@ -75,11 +75,41 @@ module top #(
 	// Dummy USB output
 	// ----------------
 
-//	bipad usb0_I ( .A(1'b0), .EN(1'b0), .Q(), .P(usb_dp) );
-//	bipad usb1_I ( .A(1'b0), .EN(1'b0), .Q(), .P(usb_dn) );
-//	bipad usb2_I ( .A(1'b0), .EN(1'b0), .Q(), .P(usb_pu_fs) );
-//	bipad usb3_I ( .A(1'b0), .EN(1'b0), .Q(), .P(usb_pu_ls) );
+	wire pu_ena;
 
+	bipad usb_pu_hs_io ( .A(1'b1), .EN(pu_ena), .Q(), .P(usb_pu_fs) );
+	bipad usb_pu_ls_io ( .A(1'b0), .EN(1'b0),   .Q(), .P(usb_pu_ls) );
+
+
+	usb #(
+		.EPDW(32),
+		.EVT_DEPTH(1)
+	) usb_I (
+		.pad_dp        (usb_dp),
+		.pad_dn        (usb_dn),
+		.pad_pu        (pu_ena),
+		.ep_tx_addr_0  (ep_tx_addr),
+		.ep_tx_data_0  (ep_tx_data),
+		.ep_tx_we_0    (ep_tx_we),
+		.ep_rx_addr_0  (ep_rx_addr),
+		.ep_rx_data_1  (ep_rx_data),
+		.ep_rx_re_0    (ep_rx_re),
+		.ep_clk        (clk_wb),
+		.bus_addr      (usb_addr),
+		.bus_din       (usb_wdata),
+		.bus_dout      (usb_rdata),
+		.bus_cyc       (usb_cyc),
+		.bus_we        (usb_we),
+		.bus_ack       (usb_ack),
+		.irq           (sys_int),
+		.sof           (),
+		.uc_addr       (uc_addr),
+		.uc_data       (uc_data),
+		.uc_we         (uc_we),
+		.uc_clk        (clk_wb),
+		.clk           (clk_usb),
+		.rst           (rst_usb)
+	);
 
 
 	// LED debug
@@ -101,76 +131,8 @@ module top #(
 
 	assign led_r_o = cnt_wb  == 4'hf;
 	assign led_g_o = cnt_usb == 4'hf;
-	assign led_b_o = ram_we;
+	assign led_b_o = 1'b0;
 
-
-	wire [10:0] ram_raddr;
-	wire [10:0] ram_waddr;
-	wire [ 7:0] ram_rdata;
-	wire [ 7:0] ram_wdata;
-	wire        ram_we;
-
-	reg a;
-
-	always @(posedge clk_usb)
-		a <= usb_cyc & ~a;
-
-	assign usb_rdata = { 8'h00, ram_rdata };
-	assign usb_ack = a;
-
-//`define USB
-`ifdef USB
-	assign ram_raddr = usb_addr;
-	assign ram_waddr = usb_addr;
-	assign ram_wdata = usb_wdata[7:0];
-	assign ram_we = usb_cyc & usb_we & ~usb_ack;
-`else
-
-	reg [6:0] cnt_0;
-	reg [6:0] cnt_1;
-
-	always @(posedge clk_usb)
-		if (rst_usb) begin
-			cnt_0 <= 0;
-			cnt_1 <= 0;
-		end else begin
-			cnt_0 <= cnt_0 + 1;
-			cnt_1 <= cnt_0;
-		end
-
-	assign ram_raddr = { 5'b00000, cnt_0[5:0] };
-	assign ram_waddr = { 5'b00000, cnt_1[5:0] };
-	assign ram_wdata = { cnt_1[3:0], ram_rdata[3:0] };
-	assign ram_we    = cnt_1[6];
-`endif
-
-	usb_ep_buf #(
-		.RWIDTH(8),
-		.WWIDTH(32)
-	) buf_tx (
-		.rd_addr_0 (ram_raddr),
-		.rd_data_1 (ram_rdata),
-		.rd_en_0   (1'b1),
-		.rd_clk    (clk_usb),
-		.wr_addr_0 (ep_tx_addr),
-		.wr_data_0 (ep_tx_data),
-		.wr_en_0   (ep_tx_we),
-		.wr_clk    (clk_wb)
-	);
-
-	usb_ep_buf #(
-		.RWIDTH(32),
-		.WWIDTH(8)
-	) buf_rx (
-		.rd_addr_0 (ep_rx_addr),
-		.rd_data_1 (ep_rx_data),
-		.rd_en_0   (ep_rx_re),
-		.rd_clk    (clk_wb),
-		.wr_addr_0 (ram_waddr),
-		.wr_data_0 (ram_wdata),
-		.wr_en_0   (ram_we),
-		.wr_clk    (clk_usb)
-	);
 
 
 	// Bridge

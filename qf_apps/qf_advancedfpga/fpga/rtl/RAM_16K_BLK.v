@@ -92,7 +92,9 @@ wire 		reg_rd0;
 wire 		reg_rd1;
 wire [10:0] addr_wr0,addr_rd0,addr_wr1,addr_rd1;
 
+(* force_downto *)
 wire [35:0] in_reg0;
+(* force_downto *)
 wire [35:0] in_reg1;
 
 wire [4:0] wen_reg0;
@@ -178,7 +180,7 @@ begin
 end
 else if (wr_width_int0 ==36 || wr_width_int0 == 18 || wr_width_int0 ==9)
    begin
-	assign in_reg0[35:wr_width_int0]=0;
+//	assign in_reg0[35:wr_width_int0]=0;
 	assign in_reg0[wr_width_int0-1:0]=WD0;
 end
 else if(wr_width_int0 ==35 || (wr_width_int0 ==17 && wr_depth_int0 ==1024) ||(wr_width_int0==17 && wr_depth_int0 ==512 && rd_depth_int0 != 2048) || (wr_width_int0==8&&wr_depth_int0==2048) || (wr_width_int0 ==8 && wr_depth_int0 ==1024 && rd_depth_int0 != 2048))
