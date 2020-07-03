@@ -80,7 +80,7 @@ module top #(
 	bipad usb_pu_hs_io ( .A(1'b1), .EN(pu_ena), .Q(), .P(usb_pu_fs) );
 	bipad usb_pu_ls_io ( .A(1'b0), .EN(1'b0),   .Q(), .P(usb_pu_ls) );
 
-
+`ifndef BENCH
 	usb #(
 		.EPDW(32),
 		.EVT_DEPTH(1)
@@ -110,6 +110,19 @@ module top #(
 		.clk           (clk_usb),
 		.rst           (rst_usb)
 	);
+`endif
+
+	usb_bench dut_I (
+		.uc_addr       (uc_addr),
+		.uc_data       (uc_data),
+		.uc_we         (uc_we),
+		.uc_clk        (clk_wb),
+		.x             ({usb_dp, usb_dn}),
+		.clk           (clk_usb),
+		.rst           (rst_usb)
+	);
+
+	assign pu_ena = 1'b0;
 
 
 	// LED debug

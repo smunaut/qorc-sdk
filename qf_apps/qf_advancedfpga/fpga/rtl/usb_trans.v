@@ -181,6 +181,7 @@ module usb_trans #(
 	// Micro-Code execution engine
 	// ---------------------------
 
+`ifdef X
 	// Local reset to avoid being in the critical path
 	always @(posedge clk or posedge rst)
 		if (rst)
@@ -202,6 +203,21 @@ module usb_trans #(
 			mc_pc_r <= mc_pc;
 
 	assign mc_pc_nxt = mc_pc_r + 1;
+`else
+
+	// DUT
+	s3_pc dut_I (
+		.op_jmp       (mc_opcode[15]),
+		.op_tgt       ({mc_opcode[13:8], 2'b00}),
+		.op_cond_inv  (mc_opcode[14]),
+		.op_cond_mask (mc_opcode[7:4]),
+		.op_cond_val  (mc_opcode[3:0]),
+		.a_reg        (mc_a_reg),
+		.pc           (mc_pc),
+		.clk          (clk),
+		.rst          (rst)
+	);
+`endif
 
 	// Microcode ROM
 	RAM_16K_BLK #(
